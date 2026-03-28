@@ -41,7 +41,7 @@ def launch_dashboard(username: str, port: int = 5000, open_browser: bool = True)
     
     # Start server (v2 with tabs)
     skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    server_script = os.path.join(skill_dir, 'scripts', 'web_server_v2.py')
+    server_script = os.path.join(skill_dir, 'scripts', 'web_server.py')
     
     try:
         # Start in background

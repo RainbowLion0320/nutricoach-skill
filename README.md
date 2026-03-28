@@ -83,8 +83,7 @@ health-coach/
 │   ├── pantry_manager.py       # 食材库存管理
 │   ├── smart_recipe.py         # 智能菜谱推荐
 │   ├── launch_dashboard.py     # 启动 Web 面板
-│   ├── web_server.py           # Web 服务 v1
-│   ├── web_server_v2.py        # Web 服务 v2（页签式）
+│   ├── web_server.py           # Web 服务（页签式面板）
 │   ├── report_generator.py     # 报告生成
 │   ├── export_data.py          # 数据导出
 │   ├── backup_db.py            # 数据库备份
