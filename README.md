@@ -13,6 +13,9 @@
 | 饮食推荐 | ✅ | 基于目标和剩余预算的推荐 |
 | 数据分析 | ✅ | 周报、营养分析、趋势统计 |
 | OCR 拍照识别 | ✅ | 双引擎（Kimi + macOS），条形码优先匹配 |
+| Pantry 食材管理 | ✅ | 库存追踪、过期提醒、分类管理 |
+| 智能菜谱推荐 | ✅ | 基于库存和营养缺口的菜谱生成 |
+| Web 评估面板 | ✅ | 可视化仪表盘，支持页签导航 |
 | 数据导出 | ✅ | JSON/CSV 格式导出 |
 | 数据备份 | ✅ | 自动备份与恢复 |
 
@@ -60,23 +63,36 @@ python3 scripts/report_generator.py --user robert nutrition --days 7
 
 ```
 health-coach/
-├── SKILL.md                    # 主文档（Skill 入口）
-├── README.md                   # 本文件
+├── SKILL.md                    # Skill 入口文档（OpenClaw 使用）
+├── README.md                   # 本文件（GitHub 展示）
+├── requirements.txt            # Python 依赖
 ├── references/
 │   ├── ARCHITECTURE.md         # 系统架构设计
 │   ├── DATABASE_SCHEMA.md      # 数据库设计
-│   ├── API_REFERENCE.md        # API 文档
-│   └── FOOD_DATABASE.md        # 食材数据库规范
+│   ├── FEATURE_GUIDE.md        # 用户功能手册
+│   └── DEVELOPER_GUIDE.md      # 开发者 API 参考
 ├── scripts/
 │   ├── init_db.py              # 数据库初始化
 │   ├── user_profile.py         # 用户档案管理
 │   ├── body_metrics.py         # 身体数据记录
 │   ├── meal_logger.py          # 饮食日志
-│   ├── food_analyzer.py        # 食物分析
 │   ├── diet_recommender.py     # 饮食推荐
-│   └── report_generator.py     # 报告生成
+│   ├── food_analyzer.py        # 食物分析 + OCR 扫描
+│   ├── food_ocr.py             # OCR 引擎封装
+│   ├── food_matcher.py         # 食物匹配引擎
+│   ├── pantry_manager.py       # 食材库存管理
+│   ├── smart_recipe.py         # 智能菜谱推荐
+│   ├── launch_dashboard.py     # 启动 Web 面板
+│   ├── web_server.py           # Web 服务 v1
+│   ├── web_server_v2.py        # Web 服务 v2（页签式）
+│   ├── report_generator.py     # 报告生成
+│   ├── export_data.py          # 数据导出
+│   ├── backup_db.py            # 数据库备份
+│   ├── migrate_db.py           # 数据库迁移
+│   └── logger.py               # 日志工具
 └── data/
-    └── <username>.db           # 用户隔离的 SQLite 数据库
+    ├── <username>.db           # 用户隔离的 SQLite 数据库
+    └── backups/                # 自动备份目录
 ```
 
 ## 数据库设计
@@ -84,14 +100,77 @@ health-coach/
 - **多用户隔离**: 每个用户独立 SQLite 文件
 - **时间序列**: 体重、饮食支持历史追踪
 - **营养计算**: 自动计算卡路里和宏量营养素
+- **库存管理**: Pantry 表追踪食材剩余量和过期时间
 - **可扩展**: 支持自定义食物添加
 
-## 扩展性设计
+## Pantry 食材管理
 
-1. **营养数据源**: 预留 USDA API 接口
-2. **推荐算法**: 支持多种饮食模式（低碳、高蛋白等）
-3. **拍照识别**: Vision API 集成占位
-4. **报告模板**: 支持 text/json/html 格式
+```bash
+# 添加食材（自动检测储藏位置）
+python3 scripts/pantry_manager.py --user robert add \
+  --food "鸡胸肉" --quantity 500 --expiry 2026-04-05
+
+# 记录使用（自动扣减剩余）
+python3 scripts/pantry_manager.py --user robert use \
+  --item-id 1 --amount 200 --notes "做沙拉"
+
+# 查看剩余库存
+python3 scripts/pantry_manager.py --user robert remaining
+
+# 查看快过期食材
+python3 scripts/pantry_manager.py --user robert list --expiring 3
+```
+
+**储藏位置分类**:
+- ❄️ 冰箱：冷藏食材
+- 🧊 冷冻：冷冻肉类
+- 📦 干货区：常温干燥食材
+- 🌡️ 台面：室温短期存放
+
+## 智能菜谱推荐
+
+```bash
+# 基于库存推荐菜谱
+python3 scripts/smart_recipe.py --user robert --count 3
+```
+
+**推荐逻辑**:
+1. 分析营养缺口（对比近期摄入 vs 目标）
+2. 优先使用快过期食材
+3. 动态调整库存阈值
+4. 平衡蛋白质、碳水、脂肪
+
+## Web 评估面板 (v2)
+
+```bash
+# 启动面板（自动打开浏览器）
+python3 scripts/launch_dashboard.py --user robert
+
+# 访问 http://127.0.0.1:5000
+```
+
+**页签功能**:
+- 📊 **概览**: 今日数据、体重趋势、营养趋势、身体数据
+- 🥬 **食材管理**: 按储藏位置分组的 pantry，支持使用/添加操作
+- ⚖️ **体重记录**: 体重历史记录
+
+## OCR 食品识别
+
+```bash
+# 静默扫描（自动处理）
+python3 scripts/food_analyzer.py --user robert scan --image chips.jpg
+
+# 使用特定引擎
+python3 scripts/food_analyzer.py --user robert scan --image chips.jpg --engine macos
+
+# 主动更新条形码数据
+python3 scripts/food_analyzer.py --user robert update-by-barcode \
+  --barcode 6941234567890 --calories 550 --protein 6.5
+```
+
+**支持的 OCR 引擎**:
+- **Kimi Vision** (默认): 高精度，需要 API key
+- **macOS Vision**: 本地免费，无需网络
 
 ## 数据管理
 
@@ -106,53 +185,22 @@ python3 scripts/backup_db.py --user robert list
 python3 scripts/backup_db.py --user robert restore --file robert_20260327_164628.db
 ```
 
-## Web 评估面板
-
-```bash
-# 启动面板（自动打开浏览器）
-python3 scripts/launch_dashboard.py --user robert
-
-# 访问 http://127.0.0.1:5000
-```
-
-**功能**：
-- 📊 今日营养概览
-- ⚖️ 体重趋势图（30天）
-- 🍽️ 营养摄入趋势（7天）
-- 👤 身体数据展示
-
-## OCR 食品识别
-
-```bash
-# 静默扫描（自动处理）
-python3 scripts/food_analyzer.py --user robert scan --image chips.jpg
-
-# 查看详情
-python3 scripts/food_analyzer.py --user robert scan --image chips.jpg --verbose
-
-# 调整变化阈值
-python3 scripts/food_analyzer.py --user robert scan --image chips.jpg --threshold 5
-
-# 主动更新
-python3 scripts/food_analyzer.py --user robert update-by-barcode \
-  --barcode 6941234567890 --calories 550 --protein 6.5 --carbs 55 --fat 36 --fiber 3
-```
-
 ## 文档
 
 | 文档 | 说明 |
 |-----|------|
-| [FEATURE_GUIDE.md](references/FEATURE_GUIDE.md) | 用户功能手册 |
+| [SKILL.md](SKILL.md) | OpenClaw Skill 入口文档 |
+| [FEATURE_GUIDE.md](references/FEATURE_GUIDE.md) | 用户功能手册（详细使用说明） |
 | [DEVELOPER_GUIDE.md](references/DEVELOPER_GUIDE.md) | 开发者 API 参考 |
 | [ARCHITECTURE.md](references/ARCHITECTURE.md) | 系统架构设计 |
 | [DATABASE_SCHEMA.md](references/DATABASE_SCHEMA.md) | 数据库设计 |
 
 ## 待完成
 
-- [ ] USDA FoodData Central API 集成
 - [ ] 更多推荐算法（低碳、16:8 轻断食等）
 - [ ] 周报/月报 HTML 模板
 - [ ] 数据同步（多设备）
+- [ ] 移动端适配
 
 ## 测试状态
 
@@ -161,6 +209,15 @@ python3 scripts/food_analyzer.py --user robert update-by-barcode \
 - ✅ user_profile.py - 用户档案创建/查询
 - ✅ body_metrics.py - 体重记录/BMI计算
 - ✅ meal_logger.py - 饮食记录/营养计算
-- ✅ food_analyzer.py - 食物搜索/添加
 - ✅ diet_recommender.py - 饮食推荐
+- ✅ food_analyzer.py - 食物搜索/OCR扫描
+- ✅ pantry_manager.py - 食材库存管理
+- ✅ smart_recipe.py - 智能菜谱推荐
+- ✅ launch_dashboard.py - Web 面板启动
 - ✅ report_generator.py - 营养分析报告
+- ✅ export_data.py - 数据导出
+- ✅ backup_db.py - 数据库备份
+
+---
+
+*Last updated: 2026-03-28 (v2.0)*
