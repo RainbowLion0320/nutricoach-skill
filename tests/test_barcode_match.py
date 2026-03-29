@@ -7,9 +7,12 @@ import json
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'scripts'))
 
-from scripts.food_matcher import match_and_compare, format_comparison
+from food_matcher import match_and_compare, format_comparison
 
 # Mock OCR result with barcode that exists in database
 MOCK_BARCODE_MATCH = {

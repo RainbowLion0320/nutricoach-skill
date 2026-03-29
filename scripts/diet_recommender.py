@@ -11,6 +11,12 @@ import sys
 from datetime import datetime
 from typing import Dict, Any, List
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    CUSTOM_FOODS_COLUMNS as FC,
+    DEFAULTS
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -72,7 +78,8 @@ def get_today_intake(conn: sqlite3.Connection, user_id: int) -> Dict[str, float]
     ''', (user_id, today))
     
     row = cursor.fetchone()
-    
+
+    # Query: SUM(total_calories), SUM(total_protein_g), SUM(total_carbs_g), SUM(total_fat_g)
     return {
         "calories": row[0] or 0,
         "protein_g": row[1] or 0,
@@ -108,11 +115,11 @@ def get_food_by_category(conn: sqlite3.Connection, category: str, limit: int = 2
     foods = []
     for row in rows:
         foods.append({
-            "name": row[0],
-            "calories_per_100g": row[1],
-            "protein_per_100g": row[2],
-            "carbs_per_100g": row[3],
-            "fat_per_100g": row[4]
+            "name": row[FC['name']],
+            "calories_per_100g": row[FC['calories_per_100g']],
+            "protein_per_100g": row[FC['protein_per_100g']],
+            "carbs_per_100g": row[FC['carbs_per_100g']],
+            "fat_per_100g": row[FC['fat_per_100g']]
         })
     
     return foods
@@ -136,7 +143,7 @@ def recommend_meal(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Get targets and current intake
         targets = get_user_targets(conn, args.user)

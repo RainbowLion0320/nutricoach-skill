@@ -30,3 +30,14 @@ FOOD_STORAGE_DEFAULTS = {
     '米饭': '冰箱', '燕麦': '干货区', '面条': '干货区',
     '豆腐': '冰箱', '牛奶': '冰箱', '酸奶': '冰箱',
 }
+
+# Default values (mirrored from db_schema)
+DEFAULTS = {
+    'user_height_cm': 170.0,
+    'location_shelf_life': {
+        'fridge': 7,
+        'freezer': 90,
+        'pantry': 30,
+        'counter': 5,
+    },
+}

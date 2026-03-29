@@ -12,6 +12,11 @@ import tempfile
 import subprocess
 from typing import Dict, Any, List, Optional
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    CUSTOM_FOODS_COLUMNS as FC
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -36,13 +41,13 @@ def search_food(conn: sqlite3.Connection, query: str, limit: int = 10) -> List[D
     foods = []
     for row in rows:
         foods.append({
-            "name": row[0],
-            "category": row[1],
-            "calories_per_100g": row[2],
-            "protein_per_100g": row[3],
-            "carbs_per_100g": row[4],
-            "fat_per_100g": row[5],
-            "fiber_per_100g": row[6]
+            "name": row[FC['name']],
+            "category": row[FC['category']],
+            "calories_per_100g": row[FC['calories_per_100g']],
+            "protein_per_100g": row[FC['protein_per_100g']],
+            "carbs_per_100g": row[FC['carbs_per_100g']],
+            "fat_per_100g": row[FC['fat_per_100g']],
+            "fiber_per_100g": row[FC['fiber_per_100g']]
         })
     
     return foods
@@ -65,7 +70,7 @@ def add_custom_food(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         cursor.execute('''
             INSERT INTO custom_foods 
@@ -322,7 +327,7 @@ def add_food_from_ocr(username: str, ocr_structured: dict) -> dict:
         if not user_row:
             return {"status": "error", "error": "user_not_found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         nutrition = ocr_structured.get("nutrition_per_100g", {})
         
         cursor.execute('''

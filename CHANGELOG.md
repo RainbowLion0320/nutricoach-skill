@@ -6,6 +6,30 @@
 
 ## 2026-03-29
 
+### 硬编码问题修复 - Phase 1 & 2 完成
+- **审计**: 发现 142 处硬编码的 `row[n]` 数据库列索引
+- **方案**: 创建 `db_schema.py` 集中管理所有表结构定义
+- **修复完成** (12 个文件):
+  - `pantry_manager.py` - 使用 `PANTRY_COLUMNS`
+  - `meal_logger.py` - 使用 `MEALS_COLUMNS`, `FOOD_ITEMS_COLUMNS`, `CUSTOM_FOODS_COLUMNS`
+  - `body_metrics.py` - 使用 `BODY_METRICS_COLUMNS`
+  - `food_analyzer.py` - 使用 `CUSTOM_FOODS_COLUMNS`
+  - `diet_recommender.py` - 使用 `CUSTOM_FOODS_COLUMNS`
+  - `export_data.py` - 使用 `MEALS_COLUMNS`, `FOOD_ITEMS_COLUMNS`
+  - `smart_recipe.py` - 使用 `PANTRY_COLUMNS`, `CUSTOM_FOODS_COLUMNS`
+  - `food_matcher.py`, `report_generator.py` - 基础修复
+- **配置**: 默认值集中到 `DEFAULTS` 字典
+- **文档**: 创建 `HARDCODING_AUDIT.md` 记录审计结果
+
+### 测试验证完成
+- **修复测试脚本**: 更新 `sys.path` 以支持新的模块结构
+- **测试通过**:
+  - `test_barcode_match.py` - 条形码匹配场景
+  - `test_ocr_flow.py` - OCR 结果匹配
+  - `test_silent_scan.py` - 静默扫描模式
+- **模块导入测试**: 所有核心模块正常导入
+- **Web 模块测试**: 配置、路由、工具函数正常
+
 ### 模块化重构完成 ( web_server.py v3 )
 - **重构**: web_server.py 从 968 行精简到 1459 行（模块化后）
 - **分离**:

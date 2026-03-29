@@ -7,10 +7,12 @@ import json
 import sys
 import os
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'scripts'))
 
-from scripts.food_matcher import match_and_compare, format_comparison
+from food_matcher import match_and_compare, format_comparison
 
 # Mock OCR result for testing
 MOCK_OCR_RESULT = {

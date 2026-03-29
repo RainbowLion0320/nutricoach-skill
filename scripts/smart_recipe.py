@@ -11,6 +11,12 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    CUSTOM_FOODS_COLUMNS as FC,
+    PANTRY_COLUMNS as PC
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -227,7 +233,7 @@ def recommend(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Get data
         gaps = get_nutrition_gap(conn, user_id, args.days)

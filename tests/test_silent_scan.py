@@ -7,9 +7,12 @@ import json
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(project_root, 'scripts'))
 
-from scripts.food_analyzer import process_scan_result
+from food_analyzer import process_scan_result
 
 class MockArgs:
     def __init__(self, user="robert", verbose=False, threshold=10.0):

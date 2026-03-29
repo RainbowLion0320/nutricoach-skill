@@ -11,6 +11,8 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
+from db_schema import PANTRY_COLUMNS as PC, CUSTOM_FOODS_COLUMNS as FC, DEFAULTS
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -64,13 +66,7 @@ def add_item(args) -> Dict[str, Any]:
             
             # Fallback to location-based defaults
             if shelf_life_days is None:
-                defaults = {
-                    'fridge': 7,
-                    'freezer': 90,
-                    'pantry': 30,
-                    'counter': 5
-                }
-                shelf_life_days = defaults.get(args.location, 7)
+                shelf_life_days = DEFAULTS['location_shelf_life'].get(args.location, 7)
             
             expiry_date = (datetime.strptime(purchase_date, '%Y-%m-%d') + timedelta(days=shelf_life_days)).strftime('%Y-%m-%d')
         
@@ -427,13 +423,13 @@ def check_remaining(args) -> Dict[str, Any]:
 
         items = []
         for row in cursor.fetchall():
-            initial = row[2] or 0
-            remaining = row[3] or 0
+            initial = float(row[PC['quantity_g']] or 0)
+            remaining = float(row[PC['remaining_g']] or 0)
             usage_pct = round((initial - remaining) / initial * 100, 1) if initial > 0 else 0
 
             # Calculate shelf life days
-            purchase_date = row[6]
-            expiry_date = row[7]
+            purchase_date = row[PC['purchase_date']]
+            expiry_date = row[PC['expiry_date']]
             shelf_life_days = None
             if purchase_date and expiry_date:
                 try:
@@ -444,21 +440,21 @@ def check_remaining(args) -> Dict[str, Any]:
                     pass
 
             items.append({
-                "id": row[0],
-                "food_name": row[1],
+                "id": row[PC['id']],
+                "food_name": row[PC['food_name']],
                 "initial_g": initial,
                 "remaining_g": remaining,
                 "used_g": initial - remaining,
                 "usage_percentage": usage_pct,
-                "quantity_desc": row[4],
-                "location": row[5],
+                "quantity_desc": row[PC['quantity_desc']],
+                "location": row[PC['location']],
                 "purchase_date": purchase_date,
                 "expiry_date": expiry_date,
                 "shelf_life_days": shelf_life_days,
-                "category": row[10] or 'other',
+                "category": row[10] or 'other',  # from custom_foods join
                 "nutrition_per_100g": {
-                    "calories": row[8],
-                    "protein": row[9]
+                    "calories": row[8],  # from custom_foods join
+                    "protein": row[9]    # from custom_foods join
                 } if row[8] else None
             })
         

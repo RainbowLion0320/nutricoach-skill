@@ -12,6 +12,14 @@ import re
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Tuple
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    MEALS_COLUMNS as MC,
+    FOOD_ITEMS_COLUMNS as FIC,
+    CUSTOM_FOODS_COLUMNS as FC,
+    DEFAULTS
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -60,12 +68,12 @@ def search_food_nutrition(conn: sqlite3.Connection, food_name: str) -> Dict[str,
     
     if row:
         return {
-            "name": row[0],
-            "calories_per_100g": row[1],
-            "protein_per_100g": row[2],
-            "carbs_per_100g": row[3],
-            "fat_per_100g": row[4],
-            "fiber_per_100g": row[5] or 0
+            "name": row[FC['name']],
+            "calories_per_100g": row[FC['calories_per_100g']],
+            "protein_per_100g": row[FC['protein_per_100g']],
+            "carbs_per_100g": row[FC['carbs_per_100g']],
+            "fat_per_100g": row[FC['fat_per_100g']],
+            "fiber_per_100g": row[FC['fiber_per_100g']] or 0
         }
     
     # Return default/unknown
@@ -114,7 +122,7 @@ def log_meal(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Parse foods
         foods = parse_food_string(args.foods)
@@ -236,7 +244,7 @@ def list_meals(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Build query
         query = '''
@@ -269,14 +277,14 @@ def list_meals(args) -> Dict[str, Any]:
         meals = []
         for row in rows:
             meals.append({
-                "id": row[0],
-                "meal_type": row[1],
-                "eaten_at": row[2],
-                "notes": row[3],
-                "total_calories": row[4],
-                "total_protein_g": row[5],
-                "total_carbs_g": row[6],
-                "total_fat_g": row[7]
+                "id": row[MC['id']],
+                "meal_type": row[MC['meal_type']],
+                "eaten_at": row[MC['eaten_at']],
+                "notes": row[MC['notes']],
+                "total_calories": row[MC['total_calories']],
+                "total_protein_g": row[MC['total_protein_g']],
+                "total_carbs_g": row[MC['total_carbs_g']],
+                "total_fat_g": row[MC['total_fat_g']]
             })
         
         return {
@@ -333,10 +341,10 @@ def daily_summary(args) -> Dict[str, Any]:
                 "carbs_g": row[3],
                 "fat_g": row[4]
             }
-            totals["calories"] += row[1] or 0
-            totals["protein_g"] += row[2] or 0
-            totals["carbs_g"] += row[3] or 0
-            totals["fat_g"] += row[4] or 0
+            totals["calories"] += (row[1] or 0)
+            totals["protein_g"] += (row[2] or 0)
+            totals["carbs_g"] += (row[3] or 0)
+            totals["fat_g"] += (row[4] or 0)
         
         remaining = (tdee or 2000) - totals["calories"]
         

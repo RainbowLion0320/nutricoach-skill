@@ -12,6 +12,12 @@ import sys
 from datetime import datetime
 from typing import Dict, Any
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    MEALS_COLUMNS as MC,
+    FOOD_ITEMS_COLUMNS as FIC
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -74,6 +80,7 @@ def export_meals(conn: sqlite3.Connection, user_id: int) -> list:
                 "total_fat_g": row[7],
                 "foods": []
             }
+        # food_items columns start at index 8 (after meals columns)
         if row[8]:  # food_name
             meals[meal_id]["foods"].append({
                 "name": row[8],
@@ -120,7 +127,7 @@ def export_to_json(username: str, output_path: str) -> dict:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Export all data
         data = {

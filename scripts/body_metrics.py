@@ -11,6 +11,12 @@ import sys
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
+from db_schema import (
+    USERS_COLUMNS as UC,
+    BODY_METRICS_COLUMNS as BMC,
+    DEFAULTS
+)
+
 
 def get_db_path(username: str) -> str:
     """Get database file path for a user."""
@@ -30,7 +36,7 @@ def get_user_height(conn: sqlite3.Connection, username: str) -> float:
     cursor = conn.cursor()
     cursor.execute('SELECT height_cm FROM users WHERE username = ?', (username,))
     row = cursor.fetchone()
-    return row[0] if row else 170.0  # Default
+    return row[0] if row else DEFAULTS['user_height_cm']
 
 
 def log_weight(args) -> Dict[str, Any]:
@@ -128,7 +134,7 @@ def list_history(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         
         # Calculate date range
         if args.days:
@@ -153,11 +159,11 @@ def list_history(args) -> Dict[str, Any]:
         records = []
         for row in rows:
             records.append({
-                "recorded_at": row[0],
-                "weight_kg": row[1],
-                "bmi": row[2],
-                "body_fat_pct": row[3],
-                "notes": row[4]
+                "recorded_at": row[BMC['recorded_at']],
+                "weight_kg": row[BMC['weight_kg']],
+                "bmi": row[BMC['bmi']],
+                "body_fat_pct": row[BMC['body_fat_pct']],
+                "notes": row[BMC['notes']]
             })
         
         return {
@@ -191,7 +197,7 @@ def get_trend(args) -> Dict[str, Any]:
         if not user_row:
             return {"status": "error", "error": "user_not_found", "message": "User not found"}
         
-        user_id = user_row[0]
+        user_id = user_row[UC["id"]]
         days = args.days or 30
         start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         

@@ -145,11 +145,9 @@ function openEditModal(id, name, remaining, shelfLife, purchase, expiry, locatio
     currentShelfLife = shelfLife;
     document.getElementById('editModalItemName').textContent = `${name} (剩余 ${remaining}g)`;
     document.getElementById('editUseAmount').value = '';
-    document.getElementById('editUseNotes').value = '';
     document.getElementById('editPurchase').value = purchase || '';
     document.getElementById('editShelfLife').value = shelfLife || 7;
     document.getElementById('editLocation').value = location || '冰箱';
-    document.getElementById('editNotes').value = '';
     calculateExpiry();
     document.getElementById('editModal').classList.add('active');
 }
@@ -168,7 +166,6 @@ function closeModal(id) {
 
 function confirmUseFromEdit() {
     const amount = parseFloat(document.getElementById('editUseAmount').value);
-    const notes = document.getElementById('editUseNotes').value;
     if (!amount || amount <= 0) {
         alert('请输入有效的使用重量');
         return;
@@ -180,7 +177,7 @@ function confirmUseFromEdit() {
     fetch('/api/pantry/use', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: currentItemId, amount: amount, notes: notes })
+        body: JSON.stringify({ item_id: currentItemId, amount: amount })
     })
     .then(r => r.json())
     .then(data => {
@@ -200,13 +197,11 @@ function confirmEdit() {
     const purchase = document.getElementById('editPurchase').value;
     const shelfLife = parseInt(document.getElementById('editShelfLife').value);
     const location = document.getElementById('editLocation').value;
-    const notes = document.getElementById('editNotes').value;
 
     const body = { item_id: currentItemId };
     if (purchase) body.purchase = purchase;
     if (shelfLife > 0) body.shelf_life = shelfLife;
     if (location) body.location = location;
-    if (notes) body.notes = notes;
 
     fetch('/api/pantry/update', {
         method: 'POST',
