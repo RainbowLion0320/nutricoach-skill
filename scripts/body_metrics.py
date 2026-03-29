@@ -72,13 +72,22 @@ def log_weight(args) -> Dict[str, Any]:
         
         # Determine record date
         if args.date:
+            record_date = args.date
             recorded_at = f"{args.date} 08:00:00"
         else:
-            recorded_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Insert record
+            now = datetime.now()
+            record_date = now.strftime('%Y-%m-%d')
+            recorded_at = now.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Delete existing record for the same day (upsert behavior)
         cursor.execute('''
-            INSERT INTO body_metrics 
+            DELETE FROM body_metrics
+            WHERE user_id = ? AND DATE(recorded_at) = ?
+        ''', (user_id, record_date))
+
+        # Insert new record
+        cursor.execute('''
+            INSERT INTO body_metrics
             (user_id, weight_kg, height_cm, body_fat_pct, bmi, recorded_at, source, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (

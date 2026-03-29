@@ -38,6 +38,41 @@ fetch('/api/profile').then(r => r.json()).then(data => {
     `;
 });
 
+// Load weight history and render chart
+fetch('/api/weight-history?days=30').then(r => r.json()).then(data => {
+    if (data.status === 'success' && data.data?.records?.length > 0) {
+        // Take last 10 records, reverse to show chronological order (earliest first)
+        const records = data.data.records.slice(-10).reverse();
+        const labels = records.map(r => r.recorded_at?.slice(5, 10) || '');
+        const weights = records.map(r => r.weight_kg);
+
+        new Chart(document.getElementById('weightChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '体重 (kg)',
+                    data: weights,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    } else {
+        document.getElementById('weightChart').parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">暂无体重数据</p>';
+    }
+});
+
 // Pantry view switching
 function showPantryView(mode) {
     pantryViewMode = mode;

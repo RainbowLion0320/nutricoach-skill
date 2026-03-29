@@ -23,16 +23,14 @@ USERS_COLUMNS = {
 }
 
 # ============================================================================
-# Body Metrics Table
+# Body Metrics Table - for SELECT recorded_at, weight_kg, bmi, body_fat_pct, notes
 # ============================================================================
 BODY_METRICS_COLUMNS = {
-    'id': 0,
-    'user_id': 1,
-    'weight_kg': 2,
+    'recorded_at': 0,
+    'weight_kg': 1,
+    'bmi': 2,
     'body_fat_pct': 3,
-    'bmi': 4,
-    'notes': 5,
-    'recorded_at': 6,
+    'notes': 4,
 }
 
 # ============================================================================
