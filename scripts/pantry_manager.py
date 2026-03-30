@@ -72,11 +72,11 @@ def add_item(args) -> Dict[str, Any]:
         
         cursor.execute('''
             INSERT INTO pantry 
-            (user_id, food_name, food_id, quantity_g, quantity_desc, location, 
+            (user_id, food_name, food_id, quantity_g, remaining_g, quantity_desc, location, 
              purchase_date, expiry_date, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            user_id, args.food, food_id, args.quantity, args.quantity_desc,
+            user_id, args.food, food_id, args.quantity, args.quantity, args.quantity_desc,
             args.location, purchase_date, expiry_date, args.notes
         ))
         
