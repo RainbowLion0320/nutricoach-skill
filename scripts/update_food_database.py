@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Update food database with new fields:
-1. storage_method - 储存方式（冰箱/冷冻/干货区/台面）
-2. food_group - 食材大类（蛋白质/蔬菜/碳水/水果/乳制品/脂肪）
-3. default_shelf_life_days - 默认保质期（天）
+Update food database with storage_method and default_shelf_life_days.
+Note: food_group column has been removed, using category instead.
 """
 
 import sqlite3
@@ -144,18 +142,18 @@ DEFAULT_SHELF_LIFE = {
 
 
 def get_food_info(food_name, current_category):
-    """Get storage method, food group, and shelf life for a food."""
+    """Get storage method and shelf life for a food."""
     # 直接匹配
     if food_name in FOOD_STORAGE_DATA:
         data = FOOD_STORAGE_DATA[food_name]
-        return data['storage'], data['group'], data['shelf_life']
+        return data['storage'], data['shelf_life']
 
     # 根据当前 category 映射
     food_group = CATEGORY_MAPPING.get(current_category, 'carb')
     storage = DEFAULT_STORAGE.get(food_group, '干货区')
     shelf_life = DEFAULT_SHELF_LIFE.get(food_group, 30)
 
-    return storage, food_group, shelf_life
+    return storage, shelf_life
 
 
 def update_database(db_path):
@@ -172,10 +170,6 @@ def update_database(db_path):
         cursor.execute("ALTER TABLE custom_foods ADD COLUMN storage_method TEXT")
         print("Added: storage_method")
 
-    if 'food_group' not in columns:
-        cursor.execute("ALTER TABLE custom_foods ADD COLUMN food_group TEXT")
-        print("Added: food_group")
-
     if 'default_shelf_life_days' not in columns:
         cursor.execute("ALTER TABLE custom_foods ADD COLUMN default_shelf_life_days INTEGER")
         print("Added: default_shelf_life_days")
@@ -186,31 +180,30 @@ def update_database(db_path):
 
     updated = 0
     for food_id, name, category in foods:
-        storage, group, shelf_life = get_food_info(name, category)
+        storage, shelf_life = get_food_info(name, category)
 
         cursor.execute("""
             UPDATE custom_foods
             SET storage_method = ?,
-                food_group = ?,
                 default_shelf_life_days = ?
             WHERE id = ?
-        """, (storage, group, shelf_life, food_id))
+        """, (storage, shelf_life, food_id))
         updated += 1
 
     conn.commit()
     conn.close()
 
     print(f"\nUpdated {updated} food records")
-    print("\nSummary by food group:")
+    print("\nSummary by category:")
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT food_group, storage_method, COUNT(*) as count,
+        SELECT category, storage_method, COUNT(*) as count,
                AVG(default_shelf_life_days) as avg_shelf_life
         FROM custom_foods
-        GROUP BY food_group, storage_method
-        ORDER BY food_group, storage_method
+        GROUP BY category, storage_method
+        ORDER BY category, storage_method
     """)
     for row in cursor.fetchall():
         print(f"  {row[0]} / {row[1]}: {row[2]} items, avg {row[3]:.0f} days")

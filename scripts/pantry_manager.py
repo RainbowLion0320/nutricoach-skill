@@ -414,7 +414,7 @@ def check_remaining(args) -> Dict[str, Any]:
         cursor.execute('''
             SELECT p.id, p.food_name, p.quantity_g, p.remaining_g,
                    p.quantity_desc, p.location, p.purchase_date, p.expiry_date,
-                   c.calories_per_100g, c.protein_per_100g, c.food_group
+                   c.calories_per_100g, c.protein_per_100g, c.category
             FROM pantry p
             LEFT JOIN custom_foods c ON p.food_id = c.id
             WHERE p.user_id = ? AND (p.remaining_g IS NULL OR p.remaining_g > 0)

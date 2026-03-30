@@ -72,8 +72,8 @@ def import_foods(username: str, clear_existing: bool = False) -> dict:
             
             cursor.execute('''
                 INSERT INTO custom_foods 
-                (user_id, name, category, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, is_public)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+                (user_id, name, category, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (system_user_id, name, category, calories, protein, carbs, fat, fiber))
             
             inserted += 1

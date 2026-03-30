@@ -53,7 +53,48 @@ SQLite database per user with foreign key constraints enabled.
          │ fat_per_100g    │
          │ fiber_per_100g  │
          │ is_public       │
+         │ barcode         │
+         │ brand           │
+         │ source          │
+         │ updated_at      │
+         │ storage_method  │
+         │ food_group      │
+         │ default_shelf_life_days│
          │ created_at      │
+         └─────────────────┘
+                                 │
+                    ┌────────────┘
+                    │
+         ┌─────────────────┐     │
+         │     pantry      │     │
+         ├─────────────────┤     │
+         │ id (PK)         │     │
+         │ user_id (FK)    │     │
+         │ food_name       │     │
+         │ food_id (FK)────┘     │
+         │ quantity_g            │
+         │ quantity_desc         │
+         │ remaining_g           │
+         │ category              │
+         │ location              │
+         │ purchase_date         │
+         │ expiry_date           │
+         │ notes                 │
+         │ created_at            │
+         │ updated_at            │
+         └─────────────────┘     │
+                                   │
+         ┌─────────────────┐      │
+         │  pantry_usage   │      │
+         ├─────────────────┤      │
+         │ id (PK)         │      │
+         │ pantry_id (FK)──┘      │
+         │ user_id (FK)           │
+         │ used_g                 │
+         │ remaining_after_g      │
+         │ used_for_meal_id (FK)──┘
+         │ notes                  │
+         │ used_at                │
          └─────────────────┘
 ```
 
@@ -161,12 +202,90 @@ User-defined or imported food items.
 | carbs_per_100g | REAL | DEFAULT 0 | 每100克碳水 |
 | fat_per_100g | REAL | DEFAULT 0 | 每100克脂肪 |
 | fiber_per_100g | REAL | DEFAULT 0 | 每100克纤维 |
-| is_public | BOOLEAN | DEFAULT 0 | 是否公开分享 |
+| sodium_per_100g | REAL | DEFAULT 0 | 每100克钠（毫克） |
+| barcode | TEXT | | 条形码 |
+| brand | TEXT | | 品牌 |
+| source | TEXT | DEFAULT 'custom' | 数据来源 |
+| storage_method | TEXT | | 储存方式 |
+| default_shelf_life_days | INTEGER | | 默认保质期（天） |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | | 更新时间 |
 
 **Indexes:**
 - `idx_custom_foods_user` ON user_id
 - `idx_custom_foods_name` ON name
+- `idx_custom_foods_barcode` ON barcode
+
+## SQL Initialization
+
+```sql
+-- Enable foreign keys
+PRAGMA foreign_keys = ON;
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    display_name TEXT,
+    gender TEXT CHECK (gender IN ('male', 'female')),
+    birth_date DATE,
+    height_cm REAL CHECK (height_cm > 0),
+    target_weight_kg REAL,
+    activity_level TEXT CHECK (activity_level IN ('sedentary', 'light', 'moderate', 'active', 'very_active')),
+    goal_type TEXT CHECK (goal_type IN ('lose', 'maintain', 'gain')),
+    bmr_formula TEXT DEFAULT 'mifflin_st_jeor',
+    bmr REAL,
+    tdee REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+### pantry
+
+食材库存管理表。
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 库存ID |
+| user_id | INTEGER | FOREIGN KEY users(id) ON DELETE CASCADE | 用户ID |
+| food_name | TEXT | NOT NULL | 食物名称 |
+| food_id | INTEGER | FOREIGN KEY custom_foods(id) ON DELETE SET NULL | 关联的自定义食物ID |
+| quantity_g | REAL | | 总量（克） |
+| quantity_desc | TEXT | | 数量描述（如：2个，1盒） |
+| remaining_g | REAL | | 剩余量（克） |
+| category | TEXT | DEFAULT 'other' | 分类 |
+| location | TEXT | | 存放位置 |
+| purchase_date | DATE | | 购买日期 |
+| expiry_date | DATE | | 过期日期 |
+| notes | TEXT | | 备注 |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 创建时间 |
+| updated_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 更新时间 |
+
+**Indexes:**
+- `idx_pantry_user` ON user_id
+- `idx_pantry_expiry` ON expiry_date
+- `idx_pantry_location` ON location
+
+### pantry_usage
+
+食材使用记录表。
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | INTEGER | PRIMARY KEY AUTOINCREMENT | 使用记录ID |
+| pantry_id | INTEGER | FOREIGN KEY pantry(id) ON DELETE CASCADE | 库存ID |
+| user_id | INTEGER | FOREIGN KEY users(id) ON DELETE CASCADE | 用户ID |
+| used_g | REAL | NOT NULL | 使用量（克） |
+| remaining_after_g | REAL | | 使用后剩余量 |
+| used_for_meal_id | INTEGER | FOREIGN KEY meals(id) ON DELETE SET NULL | 关联的餐食ID |
+| notes | TEXT | | 备注 |
+| used_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 使用时间 |
+
+**Indexes:**
+- `idx_pantry_usage_pantry` ON pantry_id
+- `idx_pantry_usage_date` ON used_at
 
 ## SQL Initialization
 
@@ -202,4 +321,127 @@ CREATE TABLE IF NOT EXISTS body_metrics (
     height_cm REAL,
     body_fat_pct REAL CHECK (body_fat_pct >= 0 AND body_fat_pct <= 100),
     bmi REAL,
-    recorded_at DATETIME DEFAULT
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    source TEXT DEFAULT 'manual',
+    notes TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_user_date ON body_metrics(user_id, recorded_at);
+CREATE INDEX IF NOT EXISTS idx_metrics_recorded ON body_metrics(recorded_at);
+
+-- Meals table
+CREATE TABLE IF NOT EXISTS meals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    meal_type TEXT CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
+    eaten_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT,
+    total_calories REAL DEFAULT 0,
+    total_protein_g REAL DEFAULT 0,
+    total_carbs_g REAL DEFAULT 0,
+    total_fat_g REAL DEFAULT 0,
+    total_fiber_g REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_meals_user_date ON meals(user_id, eaten_at);
+CREATE INDEX IF NOT EXISTS idx_meals_type ON meals(meal_type);
+
+-- Food items table
+CREATE TABLE IF NOT EXISTS food_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meal_id INTEGER NOT NULL,
+    food_name TEXT NOT NULL,
+    quantity_g REAL NOT NULL CHECK (quantity_g > 0),
+    calories REAL NOT NULL,
+    protein_g REAL DEFAULT 0,
+    carbs_g REAL DEFAULT 0,
+    fat_g REAL DEFAULT 0,
+    fiber_g REAL DEFAULT 0,
+    source TEXT DEFAULT 'database',
+    FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_food_items_meal ON food_items(meal_id);
+CREATE INDEX IF NOT EXISTS idx_food_items_name ON food_items(food_name);
+
+-- Custom foods table
+CREATE TABLE IF NOT EXISTS custom_foods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT,
+    calories_per_100g REAL NOT NULL,
+    protein_per_100g REAL DEFAULT 0,
+    carbs_per_100g REAL DEFAULT 0,
+    fat_per_100g REAL DEFAULT 0,
+    fiber_per_100g REAL DEFAULT 0,
+    sodium_per_100g REAL DEFAULT 0,
+    barcode TEXT,
+    brand TEXT,
+    source TEXT DEFAULT 'custom',
+    storage_method TEXT,
+    default_shelf_life_days INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_foods_user ON custom_foods(user_id);
+CREATE INDEX IF NOT EXISTS idx_custom_foods_name ON custom_foods(name);
+CREATE INDEX IF NOT EXISTS idx_custom_foods_barcode ON custom_foods(barcode);
+
+-- Pantry table
+CREATE TABLE IF NOT EXISTS pantry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    food_name TEXT NOT NULL,
+    food_id INTEGER,
+    quantity_g REAL,
+    quantity_desc TEXT,
+    location TEXT,
+    purchase_date DATE,
+    expiry_date DATE,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    remaining_g REAL,
+    category TEXT DEFAULT 'other',
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (food_id) REFERENCES custom_foods(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pantry_user ON pantry(user_id);
+CREATE INDEX IF NOT EXISTS idx_pantry_expiry ON pantry(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_pantry_location ON pantry(location);
+
+-- Pantry usage table
+CREATE TABLE IF NOT EXISTS pantry_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pantry_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    used_g REAL NOT NULL,
+    remaining_after_g REAL,
+    used_for_meal_id INTEGER,
+    notes TEXT,
+    used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pantry_id) REFERENCES pantry(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (used_for_meal_id) REFERENCES meals(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pantry_usage_pantry ON pantry_usage(pantry_id);
+CREATE INDEX IF NOT EXISTS idx_pantry_usage_date ON pantry_usage(used_at);
+
+-- Trigger: Auto-update pantry remaining_g when usage is logged
+CREATE TRIGGER IF NOT EXISTS update_pantry_remaining
+AFTER INSERT ON pantry_usage
+BEGIN
+    UPDATE pantry 
+    SET remaining_g = remaining_g - NEW.used_g,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.pantry_id;
+END;
+```

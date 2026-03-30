@@ -46,11 +46,14 @@ CUSTOM_FOODS_COLUMNS = {
     'carbs_per_100g': 6,
     'fat_per_100g': 7,
     'fiber_per_100g': 8,
-    'barcode': 9,
-    'storage_method': 10,
-    'food_group': 11,
-    'default_shelf_life_days': 12,
-    'created_at': 13,
+    'sodium_per_100g': 9,
+    'barcode': 10,
+    'brand': 11,
+    'source': 12,
+    'storage_method': 13,
+    'default_shelf_life_days': 14,
+    'created_at': 15,
+    'updated_at': 16,
 }
 
 # ============================================================================
@@ -99,7 +102,7 @@ PANTRY_COLUMNS = {
     # Joined columns from custom_foods:
     'calories_per_100g': 8,
     'protein_per_100g': 9,
-    'food_group': 10,
+    'category': 10,
 }
 
 # ============================================================================
