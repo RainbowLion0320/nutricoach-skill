@@ -161,6 +161,14 @@ Daily meal records with aggregated nutrition.
 | total_fat_g | REAL | DEFAULT 0 | 总脂肪（克） |
 | total_fiber_g | REAL | DEFAULT 0 | 总纤维（克） |
 | total_sodium_mg | REAL | DEFAULT 0 | 总钠（毫克） |
+| total_calcium_mg | REAL | DEFAULT 0 | 总钙（毫克） |
+| total_trans_fat_g | REAL | DEFAULT 0 | 总反式脂肪（克） |
+| total_saturated_fat_g | REAL | DEFAULT 0 | 总饱和脂肪（克） |
+| total_sugar_g | REAL | DEFAULT 0 | 总糖（克） |
+| total_vitamin_a_ug | REAL | DEFAULT 0 | 总维生素A（微克） |
+| total_vitamin_c_mg | REAL | DEFAULT 0 | 总维生素C（毫克） |
+| total_iron_mg | REAL | DEFAULT 0 | 总铁（毫克） |
+| total_zinc_mg | REAL | DEFAULT 0 | 总锌（毫克） |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP | 创建时间 |
 
 **Indexes:**
@@ -183,6 +191,14 @@ Individual food items within a meal.
 | fat_g | REAL | DEFAULT 0 | 脂肪（克） |
 | fiber_g | REAL | DEFAULT 0 | 纤维（克） |
 | sodium_mg | REAL | DEFAULT 0 | 钠（毫克） |
+| calcium_mg | REAL | DEFAULT 0 | 钙（毫克） |
+| trans_fat_g | REAL | DEFAULT 0 | 反式脂肪（克） |
+| saturated_fat_g | REAL | DEFAULT 0 | 饱和脂肪（克） |
+| sugar_g | REAL | DEFAULT 0 | 糖（克） |
+| vitamin_a_ug | REAL | DEFAULT 0 | 维生素A（微克） |
+| vitamin_c_mg | REAL | DEFAULT 0 | 维生素C（毫克） |
+| iron_mg | REAL | DEFAULT 0 | 铁（毫克） |
+| zinc_mg | REAL | DEFAULT 0 | 锌（毫克） |
 | source | TEXT | DEFAULT 'database' | 数据来源 |
 
 **Indexes:**
@@ -205,6 +221,14 @@ User-defined or imported food items.
 | fat_per_100g | REAL | DEFAULT 0 | 每100克脂肪 |
 | fiber_per_100g | REAL | DEFAULT 0 | 每100克纤维 |
 | sodium_per_100g | REAL | DEFAULT 0 | 每100克钠（毫克） |
+| calcium_mg | REAL | DEFAULT 0 | 每100克钙（毫克） |
+| trans_fat_g | REAL | DEFAULT 0 | 每100克反式脂肪（克） |
+| saturated_fat_g | REAL | DEFAULT 0 | 每100克饱和脂肪（克） |
+| sugar_g | REAL | DEFAULT 0 | 每100克糖（克） |
+| vitamin_a_ug | REAL | DEFAULT 0 | 每100克维生素A（微克） |
+| vitamin_c_mg | REAL | DEFAULT 0 | 每100克维生素C（毫克） |
+| iron_mg | REAL | DEFAULT 0 | 每100克铁（毫克） |
+| zinc_mg | REAL | DEFAULT 0 | 每100克锌（毫克） |
 | barcode | TEXT | | 条形码 |
 | brand | TEXT | | 品牌 |
 | source | TEXT | DEFAULT 'custom' | 数据来源 |
@@ -345,6 +369,14 @@ CREATE TABLE IF NOT EXISTS meals (
     total_fat_g REAL DEFAULT 0,
     total_fiber_g REAL DEFAULT 0,
     total_sodium_mg REAL DEFAULT 0,
+    total_calcium_mg REAL DEFAULT 0,
+    total_trans_fat_g REAL DEFAULT 0,
+    total_saturated_fat_g REAL DEFAULT 0,
+    total_sugar_g REAL DEFAULT 0,
+    total_vitamin_a_ug REAL DEFAULT 0,
+    total_vitamin_c_mg REAL DEFAULT 0,
+    total_iron_mg REAL DEFAULT 0,
+    total_zinc_mg REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -364,6 +396,14 @@ CREATE TABLE IF NOT EXISTS food_items (
     fat_g REAL DEFAULT 0,
     fiber_g REAL DEFAULT 0,
     sodium_mg REAL DEFAULT 0,
+    calcium_mg REAL DEFAULT 0,
+    trans_fat_g REAL DEFAULT 0,
+    saturated_fat_g REAL DEFAULT 0,
+    sugar_g REAL DEFAULT 0,
+    vitamin_a_ug REAL DEFAULT 0,
+    vitamin_c_mg REAL DEFAULT 0,
+    iron_mg REAL DEFAULT 0,
+    zinc_mg REAL DEFAULT 0,
     source TEXT DEFAULT 'database',
     FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE
 );
@@ -383,6 +423,14 @@ CREATE TABLE IF NOT EXISTS custom_foods (
     fat_per_100g REAL DEFAULT 0,
     fiber_per_100g REAL DEFAULT 0,
     sodium_per_100g REAL DEFAULT 0,
+    calcium_mg REAL DEFAULT 0,
+    trans_fat_g REAL DEFAULT 0,
+    saturated_fat_g REAL DEFAULT 0,
+    sugar_g REAL DEFAULT 0,
+    vitamin_a_ug REAL DEFAULT 0,
+    vitamin_c_mg REAL DEFAULT 0,
+    iron_mg REAL DEFAULT 0,
+    zinc_mg REAL DEFAULT 0,
     barcode TEXT,
     brand TEXT,
     source TEXT DEFAULT 'custom',
