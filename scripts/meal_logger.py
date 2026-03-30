@@ -69,6 +69,7 @@ def search_food_nutrition(conn: sqlite3.Connection, food_name: str) -> Dict[str,
     if row:
         return {
             "name": row[FC['name']],
+            "unit": row[FC['unit']] or 'g',
             "calories_per_100g": row[FC['calories_per_100g']],
             "protein_per_100g": row[FC['protein_per_100g']],
             "carbs_per_100g": row[FC['carbs_per_100g']],
@@ -88,6 +89,7 @@ def search_food_nutrition(conn: sqlite3.Connection, food_name: str) -> Dict[str,
     # Return default/unknown
     return {
         "name": food_name,
+        "unit": 'g',
         "calories_per_100g": 0,
         "protein_per_100g": 0,
         "carbs_per_100g": 0,
@@ -177,8 +179,11 @@ def log_meal(args) -> Dict[str, Any]:
         totals = {"calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0, "fiber_g": 0, "sodium_mg": 0}
         unknown_foods = []
         
-        for food_name, quantity_g in foods:
+        for food_name, quantity_input in foods:
             nutrition_info = search_food_nutrition(conn, food_name)
+            unit = nutrition_info.get("unit", "g")
+            # For now, treat ml same as g for calculation (1ml ≈ 1g for most liquids)
+            quantity_g = quantity_input
             calculated = calculate_nutrition(nutrition_info, quantity_g)
             
             if nutrition_info.get("unknown"):
@@ -186,11 +191,13 @@ def log_meal(args) -> Dict[str, Any]:
             
             # Insert food item
             cursor.execute('''
-                INSERT INTO food_items (meal_id, food_name, quantity_g, calories, protein_g, carbs_g, fat_g, fiber_g, sodium_mg, source)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO food_items (meal_id, food_name, quantity_input, unit, quantity_g, calories, protein_g, carbs_g, fat_g, fiber_g, sodium_mg, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 meal_id,
                 nutrition_info["name"],
+                quantity_input,
+                unit,
                 quantity_g,
                 calculated["calories"],
                 calculated["protein_g"],
@@ -203,6 +210,8 @@ def log_meal(args) -> Dict[str, Any]:
             
             food_items.append({
                 "name": nutrition_info["name"],
+                "quantity_input": quantity_input,
+                "unit": unit,
                 "quantity_g": quantity_g,
                 "nutrition": calculated
             })
