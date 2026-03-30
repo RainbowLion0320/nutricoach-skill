@@ -88,11 +88,16 @@ function showPantryView(mode) {
 function getExpiryBadge(item) {
     if (!item.expiry_date) return { class: 'expiry-ok', text: '新鲜' };
     const today = new Date();
+    today.setHours(0, 0, 0, 0);  // 只比较日期部分
     const expiry = new Date(item.expiry_date);
+    expiry.setHours(0, 0, 0, 0);
     const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-    if (daysLeft <= 1) return { class: 'expiry-urgent', text: '今天过期' };
-    if (daysLeft <= 3) return { class: 'expiry-soon', text: `${daysLeft}天后过期` };
-    return { class: 'expiry-ok', text: `${daysLeft}天后过期` };
+    
+    if (daysLeft < 0) return { class: 'expiry-expired', text: `已过期 ${Math.abs(daysLeft)} 天` };
+    if (daysLeft === 0) return { class: 'expiry-urgent', text: '今天过期' };
+    if (daysLeft === 1) return { class: 'expiry-urgent', text: '明天过期' };
+    if (daysLeft <= 3) return { class: 'expiry-soon', text: `${daysLeft} 天后过期` };
+    return { class: 'expiry-ok', text: `${daysLeft} 天后过期` };
 }
 
 // Render pantry item
