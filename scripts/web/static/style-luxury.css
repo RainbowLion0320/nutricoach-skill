@@ -633,6 +633,31 @@ header p {
   box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
+/* Date and shelf life row */
+.date-shelf-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--space-lg);
+  margin: var(--space-lg) 0;
+}
+
+.date-shelf-row .form-field input {
+  padding: var(--space-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.date-shelf-row .form-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
 .modal-buttons {
   display: flex;
   gap: var(--space-md);
