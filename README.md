@@ -1,6 +1,22 @@
 # Health Coach Skill
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
+
 一个全面的个人健康数据管理与智能饮食推荐系统。
+
+> 🎨 **奢华精致风格 UI** - 深墨绿 + 香槟金主题，Playfair Display 优雅字体
+
+## 功能亮点
+
+- 📊 **体重趋势追踪** - 30天数据可视化
+- 🍽️ **饮食日志** - 自动计算营养，支持569种中餐食物
+- 📷 **OCR 拍照识别** - 扫描食品包装自动提取营养信息
+- 🥬 **Pantry 食材管理** - 库存追踪、过期提醒、分类管理
+- 🤖 **智能菜谱推荐** - 基于库存和营养缺口生成菜谱
+- 🌐 **Web 仪表板** - 奢华精致风格，响应式设计
+- 📤 **数据导出** - JSON/CSV 格式
 
 ## 系统要求
 
