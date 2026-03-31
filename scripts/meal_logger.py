@@ -287,7 +287,9 @@ def list_meals(args) -> Dict[str, Any]:
         
         # Build query
         query = '''
-            SELECT id, meal_type, eaten_at, notes, total_calories, total_protein_g, total_carbs_g, total_fat_g
+            SELECT id, user_id, meal_type, eaten_at, notes, total_calories, total_protein_g, total_carbs_g, total_fat_g,
+                   total_fiber_g, total_sodium_mg, total_calcium_mg, total_trans_fat_g, total_saturated_fat_g,
+                   total_sugar_g, total_vitamin_a_ug, total_vitamin_c_mg, total_iron_mg, total_zinc_mg
             FROM meals
             WHERE user_id = ?
         '''

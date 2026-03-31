@@ -314,6 +314,37 @@ def process_scan_result(args, ocr_data: dict, match_data: dict) -> dict:
         }
 
 
+def parse_shelf_life(shelf_life_text: str) -> int:
+    """Parse shelf life text to days."""
+    if not shelf_life_text:
+        return None
+    
+    text = str(shelf_life_text).lower().strip()
+    
+    # Match patterns like "6个月", "12个月", "180天", "6 month", "12 months"
+    import re
+    
+    # Chinese patterns
+    month_match = re.search(r'(\d+)\s*个?月', text)
+    if month_match:
+        return int(month_match.group(1)) * 30
+    
+    day_match = re.search(r'(\d+)\s*天', text)
+    if day_match:
+        return int(day_match.group(1))
+    
+    # English patterns
+    month_match_en = re.search(r'(\d+)\s*months?', text)
+    if month_match_en:
+        return int(month_match_en.group(1)) * 30
+    
+    day_match_en = re.search(r'(\d+)\s*days?', text)
+    if day_match_en:
+        return int(day_match_en.group(1))
+    
+    return None
+
+
 def add_food_from_ocr(username: str, ocr_structured: dict) -> dict:
     """Add food to database from OCR result."""
     db_path = get_db_path(username)
@@ -330,11 +361,19 @@ def add_food_from_ocr(username: str, ocr_structured: dict) -> dict:
         user_id = user_row[UC["id"]]
         nutrition = ocr_structured.get("nutrition_per_100g", {})
         
+        # Parse shelf life
+        shelf_life_text = ocr_structured.get("shelf_life")
+        shelf_life_days = parse_shelf_life(shelf_life_text)
+        
+        # Get storage method
+        storage_method = ocr_structured.get("storage_method")
+        
         cursor.execute('''
             INSERT INTO custom_foods 
             (user_id, name, brand, barcode, category, calories_per_100g, protein_per_100g, 
-             carbs_per_100g, fat_per_100g, fiber_per_100g, source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             carbs_per_100g, fat_per_100g, fiber_per_100g, sodium_per_100g, source,
+             default_shelf_life_days, storage_method)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             user_id,
             ocr_structured.get("product_name"),
@@ -346,13 +385,21 @@ def add_food_from_ocr(username: str, ocr_structured: dict) -> dict:
             nutrition.get("carbs", 0),
             nutrition.get("fat", 0),
             nutrition.get("fiber", 0),
-            "ocr"
+            nutrition.get("sodium", 0),
+            "ocr",
+            shelf_life_days,
+            storage_method
         ))
         
         food_id = cursor.lastrowid
         conn.commit()
         
-        return {"status": "success", "food_id": food_id}
+        return {
+            "status": "success", 
+            "food_id": food_id,
+            "shelf_life_days": shelf_life_days,
+            "storage_method": storage_method
+        }
         
     except sqlite3.Error as e:
         return {"status": "error", "error": str(e)}

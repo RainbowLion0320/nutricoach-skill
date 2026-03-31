@@ -122,6 +122,8 @@ def ocr_kimi_vision(image_path: str, api_key: Optional[str] = None) -> Dict[str,
 3. 净含量/规格
 4. 营养成分表（每100g的含量）
 5. 条形码（如果有）
+6. 保质期/到期日（如：6个月、12个月、2025-12-31等）
+7. 储存条件（如：常温、冷藏、冷冻、避光等）
 
 请返回严格的JSON格式：
 {
@@ -134,8 +136,11 @@ def ocr_kimi_vision(image_path: str, api_key: Optional[str] = None) -> Dict[str,
         "protein": 蛋白质(克),
         "carbs": 碳水化合物(克),
         "fat": 脂肪(克),
-        "fiber": 膳食纤维(克)
+        "fiber": 膳食纤维(克),
+        "sodium": 钠(毫克)
     },
+    "shelf_life": "保质期",
+    "storage_method": "储存条件",
     "confidence": "识别置信度(high/medium/low)"
 }"""
                         },

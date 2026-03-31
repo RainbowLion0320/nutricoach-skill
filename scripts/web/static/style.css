@@ -112,6 +112,29 @@ header h1 { font-size: 2em; margin-bottom: 10px; }
     margin-top: 20px;
 }
 
+.chart-container-large {
+    position: relative;
+    height: 400px;
+    margin-top: 20px;
+}
+
+/* Weight trend card - full width */
+.weight-trend-card {
+    grid-column: 1 / -1;
+    margin-bottom: 20px;
+}
+
+/* Nutrition trend card - full width */
+.nutrition-trend-card {
+    grid-column: 1 / -1;
+    margin-bottom: 20px;
+}
+
+/* Two column grid */
+.grid.two-col {
+    grid-template-columns: repeat(2, 1fr);
+}
+
 .loading { text-align: center; padding: 40px; color: #999; }
 
 /* Pantry */
@@ -128,12 +151,12 @@ header h1 { font-size: 2em; margin-bottom: 10px; }
 
 .pantry-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 12px;
 }
 
-@media (max-width: 900px) { .pantry-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .pantry-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .pantry-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .pantry-grid { grid-template-columns: 1fr; } }
 
 .pantry-item {
     display: flex;
@@ -148,10 +171,33 @@ header h1 { font-size: 2em; margin-bottom: 10px; }
 .pantry-item-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 8px;
 }
 
-.pantry-name { font-weight: 500; }
+.pantry-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.pantry-name { 
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(0.75rem, 2.2vw, 0.9rem);
+    line-height: 1.4;
+    max-width: 100%;
+}
+
+.pantry-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 .pantry-qty { color: #666; font-size: 0.85em; }
 
 .pantry-progress {
@@ -173,10 +219,12 @@ header h1 { font-size: 2em; margin-bottom: 10px; }
 .pantry-progress-low { background: #f44336; }
 
 .expiry-badge {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.75em;
     font-weight: 500;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .expiry-urgent { background: #fee; color: #c33; }
@@ -188,11 +236,12 @@ header h1 { font-size: 2em; margin-bottom: 10px; }
     background: #667eea;
     color: white;
     border: none;
-    padding: 5px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85em;
-    margin-left: 10px;
+    font-size: 0.8em;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .action-btn:hover { background: #5568d3; }

@@ -20,14 +20,11 @@ function showTab(tabName) {
 // Load overview data
 fetch('/api/summary').then(r => r.json()).then(data => {
     const daily = data.daily?.data || {};
-    const sodium = daily.totals?.sodium_mg || 0;
-    const sodiumWarning = sodium > 2000 ? '⚠️' : sodium > 1500 ? '⚡' : '';
     document.getElementById('daily-summary').innerHTML = `
         <div class="stat"><span>热量</span><span class="stat-value">${Math.round(daily.totals?.calories || 0)}/${Math.round(daily.tdee || 2000)} kcal</span></div>
         <div class="stat"><span>蛋白质</span><span class="stat-value">${Math.round(daily.totals?.protein_g || 0)}g</span></div>
         <div class="stat"><span>碳水</span><span class="stat-value">${Math.round(daily.totals?.carbs_g || 0)}g</span></div>
         <div class="stat"><span>脂肪</span><span class="stat-value">${Math.round(daily.totals?.fat_g || 0)}g</span></div>
-        <div class="stat"><span>钠 ${sodiumWarning}</span><span class="stat-value">${Math.round(sodium)}mg</span></div>
     `;
 });
 
@@ -45,8 +42,8 @@ fetch('/api/profile').then(r => r.json()).then(data => {
 // Load weight history and render chart
 fetch('/api/weight-history?days=30').then(r => r.json()).then(data => {
     if (data.status === 'success' && data.data?.records?.length > 0) {
-        // Take last 10 records, reverse to show chronological order (earliest first)
-        const records = data.data.records.slice(-10).reverse();
+        // Take last 30 records, reverse to show chronological order (earliest first)
+        const records = data.data.records.slice(-30).reverse();
         const labels = records.map(r => r.recorded_at?.slice(5, 10) || '');
         const weights = records.map(r => r.weight_kg);
 
@@ -77,6 +74,118 @@ fetch('/api/weight-history?days=30').then(r => r.json()).then(data => {
     }
 });
 
+// Load nutrition history and render chart
+fetch('/api/nutrition-history?days=7').then(r => r.json()).then(data => {
+    if (data.status === 'success' && data.data?.meals?.length > 0) {
+        const meals = data.data.meals;
+        
+        // Group meals by date and sum nutrients
+        const dailyTotals = {};
+        meals.forEach(meal => {
+            const date = meal.eaten_at?.slice(0, 10) || '';
+            if (!date) return;
+            
+            if (!dailyTotals[date]) {
+                dailyTotals[date] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+            }
+            dailyTotals[date].calories += meal.total_calories || 0;
+            dailyTotals[date].protein += meal.total_protein_g || 0;
+            dailyTotals[date].carbs += meal.total_carbs_g || 0;
+            dailyTotals[date].fat += meal.total_fat_g || 0;
+        });
+        
+        // Convert to array and sort by date
+        const days = Object.entries(dailyTotals)
+            .map(([date, totals]) => ({ date, ...totals }))
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        if (days.length === 0) {
+            document.getElementById('nutritionChart').parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">暂无营养数据</p>';
+            return;
+        }
+        
+        const labels = days.map(d => d.date?.slice(5, 10) || '');
+        const calories = days.map(d => d.calories || 0);
+        const protein = days.map(d => d.protein || 0);
+        const carbs = days.map(d => d.carbs || 0);
+        const fat = days.map(d => d.fat || 0);
+
+        new Chart(document.getElementById('nutritionChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '热量 (kcal)',
+                        data: calories,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: '蛋白质 (g)',
+                        data: protein,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '碳水 (g)',
+                        data: carbs,
+                        borderColor: '#ff9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: '脂肪 (g)',
+                        data: fat,
+                        borderColor: '#f44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'top',
+                        labels: { font: { size: 11 } }
+                    } 
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: '热量 (kcal)' },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: '营养素 (g)' },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('nutritionChart').parentElement.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">暂无营养数据</p>';
+    }
+});
+
 // Pantry view switching
 function showPantryView(mode) {
     pantryViewMode = mode;
@@ -94,11 +203,11 @@ function getExpiryBadge(item) {
     expiry.setHours(0, 0, 0, 0);
     const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
     
-    if (daysLeft < 0) return { class: 'expiry-expired', text: `已过期 ${Math.abs(daysLeft)} 天` };
-    if (daysLeft === 0) return { class: 'expiry-urgent', text: '今天过期' };
-    if (daysLeft === 1) return { class: 'expiry-urgent', text: '明天过期' };
-    if (daysLeft <= 3) return { class: 'expiry-soon', text: `${daysLeft} 天后过期` };
-    return { class: 'expiry-ok', text: `${daysLeft} 天后过期` };
+    if (daysLeft < 0) return { class: 'expiry-expired', text: '已过期' };
+    if (daysLeft === 0) return { class: 'expiry-urgent', text: '今天' };
+    if (daysLeft === 1) return { class: 'expiry-urgent', text: '明天' };
+    if (daysLeft <= 3) return { class: 'expiry-soon', text: `${daysLeft}天` };
+    return { class: 'expiry-ok', text: `${daysLeft}天` };
 }
 
 // Location name mapping
@@ -116,17 +225,19 @@ function renderItem(item) {
     const progressClass = percent > 50 ? 'pantry-progress-high' : percent > 20 ? 'pantry-progress-medium' : 'pantry-progress-low';
     const unit = item.unit || 'g';
     const locationName = LOCATION_NAMES[item.location] || item.location || '冰箱';
+    // Escape food name for use in onclick attribute
+    const escapedFoodName = item.food_name.replace(/'/g, "\\'").replace(/"/g, '\\"');
 
     return `
         <div class="pantry-item">
             <div class="pantry-item-header">
-                <div>
-                    <div class="pantry-name">${item.food_name}</div>
+                <div class="pantry-info">
+                    <div class="pantry-name" title="${item.food_name}">${item.food_name}</div>
                     <div class="pantry-qty">${item.remaining_g}${unit}</div>
                 </div>
-                <div>
+                <div class="pantry-actions">
                     <span class="expiry-badge ${expiry.class}">${expiry.text}</span>
-                    <button class="action-btn" onclick="openEditModal(${item.id}, '${item.food_name}', ${item.remaining_g}, '${unit}', ${item.shelf_life_days || 7}, '${item.purchase_date || ''}', '${item.expiry_date || ''}', '${locationName}')">编辑</button>
+                    <button class="action-btn" onclick="openEditModal(${item.id}, '${escapedFoodName}', ${item.remaining_g}, '${unit}', ${item.shelf_life_days || 7}, '${item.purchase_date || ''}', '${item.expiry_date || ''}', '${locationName}')">编辑</button>
                 </div>
             </div>
             <div class="pantry-progress">
