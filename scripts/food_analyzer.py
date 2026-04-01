@@ -525,7 +525,7 @@ def main():
     elif args.command == 'identify':
         result = identify_from_photo(args)
     elif args.command == 'scan':
-        result = scan_and_match_silent(args)
+        result = scan_and_match(args)
     elif args.command == 'update-by-barcode':
         result = update_by_barcode(args)
     elif args.command == 'categories':
